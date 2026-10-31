@@ -1,1 +1,3 @@
 GLOSSARY.md
+*.jpg
+!images/*.jpg
