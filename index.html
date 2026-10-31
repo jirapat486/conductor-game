@@ -282,24 +282,27 @@
     animation: pop 0.35s cubic-bezier(.3,1.8,.5,1);
     z-index: 2;
   }
+  /* เหตุผลแสดงเป็นแถบในส่วนล่างของรูป การ์ดจึงไม่เปลี่ยนขนาดตอนเฉลย */
   .card .reason {
     display: none;
+    position: absolute; left: 0; right: 0; bottom: 0;
     width: 100%;
     padding: 0.3rem 0.4rem 0.45rem;
-    font-size: calc(var(--card) * 0.13);
-    line-height: 1.3;
+    font-size: max(11px, calc(var(--card) * 0.11));
+    line-height: 1.25;
+    overflow-wrap: anywhere;
     text-align: center;
     background: #ffe3e3;
     color: #b71c1c;
     border-top: 3px solid #ffb4b4;
-    border-radius: 0 0 12px 12px;
   }
+  .card > .reason { position: static; border-radius: 0 0 12px 12px; }
+  .card.show-reason .pic svg { padding: 3% 24% 45%; }
   .card.correct { border-color: var(--good-dark); background: #effbef; }
   .card.correct .mark { display: block; background: var(--good); }
   .card.wrong { border-color: #c62828; }
   .card.wrong .mark { display: block; background: var(--bad); }
   .card.wrong.show-reason .reason { display: block; }
-  .card.wrong.show-reason { width: calc(var(--card) * 1.5); }
   .revealed .card { cursor: default; }
 
   /* ประกายตอนวาง */
@@ -785,7 +788,8 @@
 
     card.appendChild(pic);
     card.appendChild(name);
-    card.appendChild(reason);
+    // การ์ดที่ไม่มีรูปเลย ให้แสดงเหตุผลไว้ท้ายการ์ดแทน
+    if (card.classList.contains("no-img")) card.appendChild(reason); else pic.appendChild(reason);
     card.appendChild(mark);
     card.addEventListener("pointerdown", startDrag);
     card.addEventListener("animationend", function (e) {
