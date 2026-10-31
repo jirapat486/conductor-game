@@ -33,9 +33,11 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overscroll-behavior: none; }
+  html { background: #1a7fd1; }
   html { -webkit-text-size-adjust: 100%; }
   body {
-    position: fixed; inset: 0; /* กันหน้าเด้งบน iPad */
+    /* กันหน้าเด้งบน iPad และให้เต็มจอเมื่อเปิดจากไอคอน (100lvh = ความสูงจอเต็ม) */
+    position: fixed; top: 0; left: 0; right: 0; height: 100%; height: 100lvh;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
@@ -421,7 +423,7 @@
     <div data-mascot="idle" data-lit="1"></div>
     <div class="tagline">มาช่วย <b>น้องหลอดไฟ</b> แยกวัตถุ ว่าชิ้นไหนนำไฟฟ้ากันเถอะ!</div>
     <button class="btn green huge" id="start">▶ เริ่มเล่น</button>
-    <div class="version">เวอร์ชัน 4</div>
+    <div class="version">เวอร์ชัน 5</div>
   </div>
 
   <header>
@@ -924,6 +926,7 @@
       ph.replaceWith(card); // ปล่อยนอกช่อง: กลับที่เดิม
       sound.back();
     }
+    fitBins();
     flip(card, from, 320);
     drag = null;
     updateTrayState();
@@ -1032,6 +1035,8 @@
     say(score === total ? "ถูกทุกชิ้นเลย เก่งที่สุด!" :
         "ชิ้นที่มี ✗ วางผิดช่อง อ่านเหตุผลใต้การ์ดกันนะ");
     popup.classList.remove("hide");
+    tray.classList.add("done");
+    fitBins();
     sound.fanfare(stars);
     confetti(stars === 3 ? 180 : stars === 2 ? 110 : 40);
     unduckTimer = setTimeout(function () { duckMusic(false); }, 3500);
@@ -1040,6 +1045,7 @@
   function showAnswers() {
     popup.classList.add("hide");
     tray.classList.add("done");
+    fitBins();
   }
 
   // ---------- พลุกระดาษ ----------
@@ -1076,6 +1082,22 @@
   }
 
   // ---------- เริ่มรอบใหม่ ----------
+  // ย่อการ์ดในช่องลงอัตโนมัติเมื่อการ์ดล้นช่อง (เช่น เด็กวางเกือบทุกชิ้นไว้ช่องเดียว)
+  function fitBin(bin) {
+    var box = bin.querySelector(".bin-items");
+    bin.style.removeProperty("--card");
+    var first = box.querySelector(".card");
+    if (!first || box.scrollHeight <= box.clientHeight + 1) return;
+    var base = first.getBoundingClientRect().width;
+    for (var f = 0.94; f >= 0.5; f -= 0.04) {
+      bin.style.setProperty("--card", Math.floor(base * f) + "px");
+      if (box.scrollHeight <= box.clientHeight + 1) return;
+    }
+  }
+  function fitBins() { bins.forEach(fitBin); }
+  window.addEventListener("resize", function () { if (!drag) fitBins(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitBins);
+
   function newRound() {
     if (seq) { clearTimeout(seq.timer); seq = null; }
     clearTimeout(finishTimer);
@@ -1085,7 +1107,7 @@
     document.body.classList.remove("revealed");
     tray.classList.remove("done");
     popup.classList.add("hide");
-    bins.forEach(function (b) { b.classList.remove("lit", "flicker"); });
+    bins.forEach(function (b) { b.classList.remove("lit", "flicker"); b.style.removeProperty("--card"); });
     allCards().forEach(function (c) { c.remove(); });
 
     var picked = shuffle(ALL).slice(0, ROUND_SIZE);
