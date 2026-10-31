@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="นำไฟฟ้า?">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a7fd1">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>นำไฟฟ้า หรือ ไม่นำไฟฟ้า?</title>
+<style>
+  @font-face { font-family: "Mitr"; src: url("fonts/Mitr-Medium.ttf") format("truetype"); font-weight: 400 500; }
+  @font-face { font-family: "Mitr"; src: url("fonts/Mitr-SemiBold.ttf") format("truetype"); font-weight: 600 900; }
+
+  :root {
+    --card: min(10.6vw, 16vh, 165px);
+    --ink: #263238;
+    --yes: #ffa000;
+    --yes-dark: #c56000;
+    --yes-bg: #fff3d6;
+    --no: #7e57c2;
+    --no-dark: #4d2c91;
+    --no-bg: #efe9fb;
+    --good: #43c048;
+    --good-dark: #2a8a2e;
+    --bad: #ef4444;
+    --blue: #29a8f0;
+    --blue-dark: #1474b8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overscroll-behavior: none; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    position: fixed; inset: 0; /* กันหน้าเด้งบน iPad */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    font-family: "Mitr", "Leelawadee UI", "Tahoma", sans-serif;
+    font-weight: 500;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.13' stroke-width='4' stroke-linejoin='round'%3E%3Cpath d='M30 10 L18 38 H32 L22 64 L46 30 H32 L42 10 Z'/%3E%3Cpath d='M110 90 L98 118 H112 L102 144 L126 110 H112 L122 90 Z'/%3E%3Cpath d='M0 80 H40 Q50 80 50 90 V120 Q50 130 60 130 H90 M140 0 V30 Q140 40 130 40 H90 Q80 40 80 50 V60'/%3E%3C/g%3E%3C/svg%3E"),
+      radial-gradient(circle at 50% 0%, #8fdcff 0%, #39b4f2 45%, #1a7fd1 100%);
+  }
+
+  /* ปุ่มสไตล์เกม */
+  .btn {
+    touch-action: manipulation;
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    border: 4px solid var(--ink);
+    border-radius: 999px;
+    cursor: pointer;
+    padding: 0.35em 1.6em 0.45em;
+    text-shadow: 0 3px 0 rgba(0,0,0,0.25);
+    box-shadow: inset 0 -6px 0 rgba(0,0,0,0.18), inset 0 4px 0 rgba(255,255,255,0.35), 0 6px 0 var(--ink);
+    transition: transform 0.08s;
+  }
+  .btn:active { transform: translateY(5px); box-shadow: inset 0 -6px 0 rgba(0,0,0,0.18), inset 0 4px 0 rgba(255,255,255,0.35), 0 1px 0 var(--ink); }
+  .btn.green { background: var(--good); }
+  .btn.blue { background: var(--blue); }
+  .btn.big { font-size: clamp(1.5rem, 3.2vw, 2.4rem); }
+  .btn.huge { font-size: clamp(2rem, 5vw, 3.6rem); }
+
+  /* ข้อความหัวเรื่องแบบมีขอบ */
+  .outlined {
+    color: #fff;
+    font-weight: 600;
+    text-shadow:
+      3px 0 0 var(--ink), -3px 0 0 var(--ink), 0 3px 0 var(--ink), 0 -3px 0 var(--ink),
+      2px 2px 0 var(--ink), -2px 2px 0 var(--ink), 2px -2px 0 var(--ink), -2px -2px 0 var(--ink),
+      0 7px 0 var(--ink);
+  }
+
+  #controls { display: flex; gap: 0.6rem; flex: none; z-index: 50; }
+  #controls.floating { position: fixed; right: 1rem; top: 0.8rem; z-index: 3000; }
+  #controls .btn {
+    font-size: 1.8rem;
+    width: 3.6rem; height: 3.6rem;
+    padding: 0;
+    flex: none;
+    background: #fff;
+    position: relative;
+  }
+  #controls .btn.off { background: #cfd8dc; }
+  #controls .btn.off::after {
+    content: ""; position: absolute; left: 18%; right: 18%; top: 50%; height: 5px; margin-top: -2.5px;
+    background: #e53935; border-radius: 3px; transform: rotate(-40deg);
+  }
+
+  /* ----- แถบหัว ----- */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.7rem 1rem 0.4rem;
+  }
+  h1 { margin: 0; font-size: clamp(1.5rem, 3vw, 2.5rem); line-height: 1.15; flex: none; letter-spacing: 0.5px; }
+  h1 .bolt { color: #ffeb3b; }
+  .guide { flex: 1; display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+  .guide .mascot { width: clamp(52px, 6.5vw, 84px); flex: none; }
+  .bubble {
+    position: relative;
+    background: #fff;
+    border: 4px solid var(--ink);
+    border-radius: 20px;
+    padding: 0.35rem 1rem 0.45rem;
+    font-size: clamp(1rem, 1.8vw, 1.45rem);
+    line-height: 1.3;
+    box-shadow: 0 5px 0 rgba(38,50,56,0.35);
+    min-width: 0;
+  }
+  .bubble::before {
+    content: ""; position: absolute; left: -16px; top: 50%; margin-top: -10px;
+    border: 10px solid transparent; border-right: 14px solid var(--ink); border-left: 0;
+  }
+  .bubble::after {
+    content: ""; position: absolute; left: -9px; top: 50%; margin-top: -6px;
+    border: 6px solid transparent; border-right: 9px solid #fff; border-left: 0;
+  }
+  .bubble.pop { animation: bubblePop 0.3s ease-out; }
+
+  /* ----- ถาดวัตถุด้านบน ----- */
+  .tray {
+    margin: 0 1rem;
+    padding: 0.7rem;
+    min-height: calc(var(--card) * 1.3);
+    border-radius: 26px;
+    background: rgba(255,255,255,0.28);
+    border: 4px solid rgba(255,255,255,0.75);
+    box-shadow: inset 0 4px 12px rgba(0,40,90,0.18);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.7rem;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .tray.over { background: rgba(255,255,255,0.45); border-color: #fff; }
+  .tray .check, .tray .result { display: none; }
+  .tray.empty .check { display: block; animation: pop 0.35s ease-out, pulse 1.2s 0.4s ease-in-out infinite; }
+  .tray.done { background: rgba(255,255,255,0.9); border-color: #fff; }
+  .tray.done .result { display: flex; }
+
+  .result { align-items: center; gap: 1.6rem; flex-wrap: wrap; justify-content: center; }
+  .result .score { font-size: clamp(1.4rem, 3vw, 2.3rem); font-weight: 600; }
+  .result .stars { display: flex; gap: 0.3rem; }
+  .result .stars svg { width: clamp(38px, 4.5vw, 60px); }
+
+  /* ----- ช่องด้านล่าง (กล่องวงจร) ----- */
+  @media (max-aspect-ratio: 1/1) {
+    :root { --card: min(17vw, 11vh, 150px); }
+    header { flex-wrap: wrap; justify-content: center; row-gap: 0.4rem; }
+    header h1 { order: 0; }
+    #controls { order: 1; position: absolute; right: calc(0.8rem + env(safe-area-inset-right)); top: calc(0.6rem + env(safe-area-inset-top)); }
+    header .guide { order: 2; flex-basis: 100%; justify-content: center; }
+    .bins { gap: 0.8rem; }
+    .bin-head { flex-direction: column; gap: 0.1rem; }
+  }
+  .bins { flex: 1; display: flex; gap: 1.2rem; padding: 1rem 1rem 1.1rem; min-height: 0; }
+  .bin {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-radius: 28px;
+    border: 5px solid var(--ink);
+    min-height: 0;
+    box-shadow: 0 8px 0 var(--ink);
+    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+  }
+  .bin.yes { background: var(--yes-bg); }
+  .bin.no  { background: var(--no-bg); }
+  .bin.over { transform: translateY(-4px) scale(1.012); filter: brightness(1.06); box-shadow: 0 12px 0 var(--ink), 0 0 0 8px rgba(255,255,255,0.7); }
+  .bin.bump { animation: bump 0.32s ease-out; }
+  .bin-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 0.35rem 1rem 0.45rem;
+    border-radius: 22px 22px 0 0;
+    border-bottom: 5px solid var(--ink);
+    box-shadow: inset 0 -6px 0 rgba(0,0,0,0.15), inset 0 4px 0 rgba(255,255,255,0.3);
+  }
+  .bin.yes .bin-head { background: var(--yes); }
+  .bin.no  .bin-head { background: var(--no); }
+  .bin-label { font-size: clamp(1.6rem, 3.4vw, 2.7rem); line-height: 1.2; }
+  .circuit { height: clamp(48px, 7vw, 84px); margin: -0.4rem 0; flex: none; overflow: visible; }
+  .circuit .glass { fill: #eceff1; transition: fill 0.3s; }
+  .circuit .rays { opacity: 0; transition: opacity 0.3s; }
+  .bin.lit .circuit .glass { fill: #ffeb3b; }
+  .bin.lit .circuit .rays { opacity: 1; animation: rays 0.8s ease-in-out infinite alternate; }
+  .bin.lit .circuit { filter: drop-shadow(0 0 10px #fff59d); }
+  .bin.flicker .circuit .glass { animation: flicker 0.7s steps(1) both; }
+
+  .bin-items {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.7rem;
+    padding: 1.3rem 1.3rem 0.8rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  /* ----- การ์ดวัตถุ ----- */
+  .card {
+    position: relative;
+    width: var(--card);
+    background: #fff;
+    border-radius: 16px;
+    border: 4px solid var(--ink);
+    box-shadow: 0 5px 0 rgba(38,50,56,0.45);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: grab;
+    touch-action: none;
+  }
+  .card.deal { animation: deal 0.45s cubic-bezier(.3,1.6,.5,1) both; }
+  .card .pic {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 12px 12px 0 0;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 40%, #ffffff 0%, #e3f2fd 100%);
+    border-bottom: 3px solid #e0e6ea;
+  }
+  .card .pic svg { width: 100%; height: 100%; display: block; padding: 10%; }
+  .card .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; pointer-events: none; }
+  .card.photo .pic img { display: block; }
+  .card.photo .pic svg { display: none; }
+  .card .name {
+    padding: 0.2rem 0.3rem 0.3rem;
+    text-align: center;
+    font-size: calc(var(--card) * 0.14);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .card.no-img .pic { display: none; }
+  .card.no-img { min-height: calc(var(--card) * 0.75); justify-content: center; }
+  .card.no-img .name { font-size: calc(var(--card) * 0.17); }
+  .card.dragging {
+    position: fixed;
+    z-index: 1000;
+    cursor: grabbing;
+    pointer-events: none;
+    transform: scale(1.14) rotate(-4deg);
+    box-shadow: 0 18px 28px rgba(0,0,0,0.35);
+    margin: 0;
+  }
+  .placeholder { visibility: hidden; }
+
+  .card .mark {
+    display: none;
+    position: absolute;
+    top: -1.2rem; right: -1.2rem;
+    width: 2.6rem; height: 2.6rem;
+    border-radius: 50%;
+    border: 3px solid var(--ink);
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 2.1rem;
+    text-align: center;
+    box-shadow: 0 3px 0 var(--ink);
+    animation: pop 0.35s cubic-bezier(.3,1.8,.5,1);
+    z-index: 2;
+  }
+  .card .reason {
+    display: none;
+    width: 100%;
+    padding: 0.3rem 0.4rem 0.45rem;
+    font-size: calc(var(--card) * 0.13);
+    line-height: 1.3;
+    text-align: center;
+    background: #ffe3e3;
+    color: #b71c1c;
+    border-top: 3px solid #ffb4b4;
+    border-radius: 0 0 12px 12px;
+  }
+  .card.correct { border-color: var(--good-dark); background: #effbef; }
+  .card.correct .mark { display: block; background: var(--good); }
+  .card.wrong { border-color: #c62828; }
+  .card.wrong .mark { display: block; background: var(--bad); }
+  .card.wrong.show-reason .reason { display: block; }
+  .card.wrong.show-reason { width: calc(var(--card) * 1.5); }
+  .revealed .card { cursor: default; }
+
+  /* ประกายตอนวาง */
+  .spark {
+    position: fixed;
+    width: 14px; height: 14px;
+    margin: -7px 0 0 -7px;
+    pointer-events: none;
+    z-index: 1500;
+    background: #ffeb3b;
+    border: 2px solid var(--ink);
+    clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+    animation: spark 0.55s ease-out forwards;
+  }
+
+  /* ----- มาสคอต ----- */
+  .mascot { display: block; overflow: visible; }
+  .mascot.idle { animation: bob 2.2s ease-in-out infinite; }
+  .mascot.nervous { animation: shiver 0.25s linear infinite; }
+  .mascot.happy { animation: hop 0.6s ease-in-out infinite; }
+  .mascot.sad { animation: droop 2s ease-in-out infinite; }
+
+  /* ----- หน้าเริ่มเกม ----- */
+  .screen {
+    position: fixed; inset: 0;
+    z-index: 2000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1.2rem;
+    text-align: center;
+    background: inherit;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.13' stroke-width='4' stroke-linejoin='round'%3E%3Cpath d='M30 10 L18 38 H32 L22 64 L46 30 H32 L42 10 Z'/%3E%3Cpath d='M110 90 L98 118 H112 L102 144 L126 110 H112 L122 90 Z'/%3E%3C/g%3E%3C/svg%3E"),
+      radial-gradient(circle at 50% 35%, #b5e8ff 0%, #39b4f2 45%, #1567b8 100%);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .screen.hide { opacity: 0; transform: scale(1.08); pointer-events: none; }
+  .title-big { margin: 0; font-size: clamp(2.6rem, 7vw, 6rem); line-height: 1.15; animation: titleIn 0.7s cubic-bezier(.3,1.6,.5,1) both; }
+  .title-big .small { display: block; font-size: 0.55em; }
+  .title-big .yes { color: #ffd54f; }
+  .title-big .no { color: #d1c4f5; }
+  .screen .mascot { width: clamp(120px, 18vh, 200px); }
+  .screen .tagline {
+    font-size: clamp(1.2rem, 2.4vw, 1.8rem);
+    background: #fff; border: 4px solid var(--ink); border-radius: 18px;
+    padding: 0.4rem 1.2rem; box-shadow: 0 5px 0 rgba(38,50,56,0.35);
+  }
+  .screen .btn.huge { animation: pulse 1.2s ease-in-out infinite; }
+
+  /* ----- ป๊อปอัปผลของรอบ ----- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 2500;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(10,30,60,0.55);
+    transition: opacity 0.25s;
+  }
+  .overlay.hide { opacity: 0; pointer-events: none; }
+  .panel {
+    position: relative;
+    background: #fff;
+    border: 6px solid var(--ink);
+    border-radius: 34px;
+    box-shadow: 0 12px 0 var(--ink);
+    padding: 3.2rem 3rem 2rem;
+    text-align: center;
+    width: min(92vw, 640px);
+    animation: panelIn 0.5s cubic-bezier(.3,1.5,.5,1);
+  }
+  .overlay.hide .panel { animation: none; }
+  .ribbon {
+    position: absolute; left: 50%; top: -2.2rem; transform: translateX(-50%);
+    white-space: nowrap;
+    background: var(--yes);
+    border: 5px solid var(--ink);
+    border-radius: 18px;
+    padding: 0.2rem 2rem 0.35rem;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    box-shadow: inset 0 -6px 0 rgba(0,0,0,0.15), 0 6px 0 var(--ink);
+  }
+  .panel .stars { display: flex; justify-content: center; align-items: flex-end; gap: 0.6rem; margin: 0.4rem 0 0.6rem; }
+  .panel .stars svg { width: clamp(70px, 11vw, 110px); }
+  .panel .stars svg:nth-child(2) { width: clamp(90px, 14vw, 140px); margin-bottom: 1rem; }
+  .stars svg { animation: starIn 0.5s cubic-bezier(.3,1.8,.5,1) both; }
+  .stars svg:nth-child(2) { animation-delay: 0.25s; }
+  .stars svg:nth-child(3) { animation-delay: 0.5s; }
+  .panel .score { font-size: clamp(1.5rem, 3.4vw, 2.3rem); font-weight: 600; margin-bottom: 0.4rem; }
+  .panel .row { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+  .panel .mascot { width: 84px; position: absolute; left: -1.2rem; bottom: -1.6rem; }
+
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 2600; }
+
+  /* ----- แอนิเมชัน ----- */
+  @keyframes pop { 0% { transform: scale(0.3); opacity: 0; } 70% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); } }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  @keyframes deal { 0% { transform: translateY(-40px) scale(0.4) rotate(-12deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  @keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.025, 0.97); } 70% { transform: scale(0.99, 1.015); } 100% { transform: scale(1); } }
+  @keyframes spark { 0% { transform: translate(0,0) scale(1) rotate(0); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(0.3) rotate(180deg); opacity: 0; } }
+  @keyframes bob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-6px) rotate(3deg); } }
+  @keyframes shiver { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-2px) rotate(-2deg); } 75% { transform: translateX(2px) rotate(2deg); } }
+  @keyframes hop { 0%,100% { transform: translateY(0) scale(1, 1); } 15% { transform: translateY(0) scale(1.08, 0.92); } 50% { transform: translateY(-16px) scale(0.96, 1.04); } }
+  @keyframes droop { 0%,100% { transform: rotate(-6deg) translateY(2px); } 50% { transform: rotate(-9deg) translateY(4px); } }
+  @keyframes flicker { 0%,30%,60% { fill: #ffeb3b; } 15%,45%,100% { fill: #90a4ae; } }
+  @keyframes rays { from { transform: scale(0.9); } to { transform: scale(1.1); } }
+  @keyframes bubblePop { 0% { transform: scale(0.9); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
+  @keyframes titleIn { 0% { transform: translateY(-60px) scale(0.6); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  @keyframes panelIn { 0% { transform: scale(0.5) rotate(-4deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  @keyframes starIn { 0% { transform: scale(0) rotate(-180deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+</style>
+</head>
+<body>
+  <!-- หน้าเริ่มเกม -->
+  <div class="screen" id="title">
+    <h1 class="title-big outlined">
+      <span class="yes">นำไฟฟ้า</span> <span class="small">หรือ</span> <span class="no">ไม่นำไฟฟ้า?</span>
+    </h1>
+    <div data-mascot="idle" data-lit="1"></div>
+    <div class="tagline">มาช่วย <b>น้องหลอดไฟ</b> แยกวัตถุ ว่าชิ้นไหนนำไฟฟ้ากันเถอะ!</div>
+    <button class="btn green huge" id="start">▶ เริ่มเล่น</button>
+  </div>
+
+  <header>
+    <h1 class="outlined"><span class="bolt">⚡</span> นำไฟฟ้า หรือ ไม่นำไฟฟ้า?</h1>
+    <div class="guide">
+      <div id="guideMascot" data-mascot="idle"></div>
+      <div class="bubble" id="hint">ลากวัตถุแต่ละชิ้นไปใส่ช่องที่ถูกต้องนะ!</div>
+    </div>
+    <div id="controls">
+      <button class="btn" id="music" title="เปิด/ปิดเพลง">🎵</button>
+      <button class="btn" id="mute" title="เปิด/ปิดเสียงเอฟเฟกต์">🔊</button>
+    </div>
+  </header>
+
+  <div class="tray" id="tray">
+    <button class="btn green big check" id="check">✔ ตรวจคำตอบ</button>
+    <div class="result" id="result">
+      <div class="stars" id="barStars"></div>
+      <div class="score" id="barScore"></div>
+      <button class="btn green big" id="againBar">↻ เล่นอีกครั้ง</button>
+    </div>
+  </div>
+
+  <div class="bins">
+    <div class="bin yes" data-answer="นำไฟฟ้า">
+      <div class="bin-head"><span class="bin-label outlined">นำไฟฟ้า</span></div>
+      <div class="bin-items"></div>
+    </div>
+    <div class="bin no" data-answer="ไม่นำไฟฟ้า">
+      <div class="bin-head"><span class="bin-label outlined">ไม่นำไฟฟ้า</span></div>
+      <div class="bin-items"></div>
+    </div>
+  </div>
+
+  <!-- ป๊อปอัปผลของรอบ -->
+  <div class="overlay hide" id="popup">
+    <div class="panel">
+      <div class="ribbon outlined" id="ribbon">เยี่ยมมาก!</div>
+      <div class="stars" id="popStars"></div>
+      <div class="score" id="popScore"></div>
+      <div class="row">
+        <button class="btn blue big" id="view">👀 ดูเฉลย</button>
+        <button class="btn green big" id="againPop">↻ เล่นอีกครั้ง</button>
+      </div>
+      <div id="popMascot" data-mascot="happy"></div>
+    </div>
+  </div>
+
+  <canvas id="confetti"></canvas>
+
+<script src="items.js"></script>
+<script src="icons.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var ROUND_SIZE = 12;
+  var ANSWERS = ["นำไฟฟ้า", "ไม่นำไฟฟ้า"];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var tray = $("tray"), hint = $("hint"), checkBtn = $("check"), muteBtn = $("mute");
+  var popup = $("popup");
+  var bins = Array.prototype.slice.call(document.querySelectorAll(".bin"));
+
+  var revealed = false;
+
+  // ---------- อ่านรายการวัตถุ ----------
+  function loadItems() {
+    var list = (typeof ITEMS !== "undefined" && Array.isArray(ITEMS)) ? ITEMS : [];
+    var good = [];
+    list.forEach(function (it, i) {
+      if (!it || !it["ชื่อ"] || ANSWERS.indexOf(it["คำตอบ"]) < 0) {
+        console.warn("ข้ามวัตถุลำดับที่ " + (i + 1) + " เพราะชื่อว่าง หรือคำตอบไม่ใช่ \"นำไฟฟ้า\"/\"ไม่นำไฟฟ้า\"", it);
+        return;
+      }
+      good.push({
+        name: String(it["ชื่อ"]),
+        answer: it["คำตอบ"],
+        image: it["รูป"] ? String(it["รูป"]) : "",
+        reason: it["เหตุผล"] ? String(it["เหตุผล"]) : ""
+      });
+    });
+    return good;
+  }
+  var ALL = loadItems();
+  var ICON_SET = (typeof ICONS !== "undefined" && ICONS) ? ICONS : {};
+
+  function shuffle(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  // ---------- ภาพ SVG ----------
+  var SVG_OPEN = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" stroke="#263238" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">';
+
+  function starSVG(on) {
+    return '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M50 6 L62 37 L95 39 L69 60 L78 92 L50 74 L22 92 L31 60 L5 39 L38 37 Z" fill="' + (on ? "#ffd54f" : "#cfd8dc") +
+      '" stroke="#263238" stroke-width="6" stroke-linejoin="round"/>' +
+      (on ? '<path d="M38 44 L44 30" stroke="#fff" stroke-width="5" stroke-linecap="round"/>' : "") +
+      '</svg>';
+  }
+
+  // มาสคอต "น้องหลอดไฟ": mood = idle | nervous | happy | sad
+  function mascotSVG(mood, lit) {
+    var glass = lit || mood === "happy" ? "#ffeb3b" : "#fff8c4";
+    var face;
+    if (mood === "happy") {
+      face = '<path d="M31 46 Q37 37 43 46 M57 46 Q63 37 69 46" fill="none" stroke-width="4.5"/>' +
+             '<path d="M36 56 Q50 74 64 56 Z" fill="#c62828"/>';
+    } else if (mood === "sad") {
+      face = '<ellipse cx="38" cy="47" rx="5" ry="6" fill="#263238" stroke="none"/><ellipse cx="62" cy="47" rx="5" ry="6" fill="#263238" stroke="none"/>' +
+             '<path d="M30 38 L44 41 M70 38 L56 41" stroke-width="3.5"/>' +
+             '<path d="M40 66 Q50 58 60 66" fill="none" stroke-width="4"/>' +
+             '<path d="M30 54 q-3 6 0 8 q3 -2 0 -8" fill="#4fc3f7" stroke-width="2"/>';
+    } else if (mood === "nervous") {
+      face = '<circle cx="38" cy="46" r="8" fill="#fff" stroke-width="3"/><circle cx="62" cy="46" r="8" fill="#fff" stroke-width="3"/>' +
+             '<circle cx="38" cy="43" r="3.5" fill="#263238" stroke="none"/><circle cx="62" cy="43" r="3.5" fill="#263238" stroke="none"/>' +
+             '<path d="M38 64 q4 -5 8 0 t8 0 t8 0" fill="none" stroke-width="3.5" transform="translate(-4 0)"/>' +
+             '<path d="M74 24 q-4 8 0 10 q4 -2 0 -10" fill="#4fc3f7" stroke-width="2"/>';
+    } else {
+      face = '<ellipse cx="38" cy="46" rx="5.5" ry="7" fill="#263238" stroke="none"/><ellipse cx="62" cy="46" rx="5.5" ry="7" fill="#263238" stroke="none"/>' +
+             '<circle cx="40" cy="43" r="2" fill="#fff" stroke="none"/><circle cx="64" cy="43" r="2" fill="#fff" stroke="none"/>' +
+             '<path d="M39 58 Q50 68 61 58" fill="none" stroke-width="4"/>';
+    }
+    var rays = (lit || mood === "happy")
+      ? '<g stroke="#ffd54f" stroke-width="5"><path d="M50 -10 V-2 M8 6 L14 12 M92 6 L86 12 M-6 44 H2 M98 44 H106"/></g>'
+      : "";
+    return '<svg class="mascot ' + mood + '" viewBox="-8 -12 116 132" xmlns="http://www.w3.org/2000/svg" stroke="#263238" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">' +
+      rays +
+      '<path d="M50 8 A37 37 0 0 1 75 72 L70 84 H30 L25 72 A37 37 0 0 1 50 8 Z" fill="' + glass + '"/>' +
+      '<path d="M28 30 Q34 18 46 15" fill="none" stroke="#fff" stroke-width="5"/>' +
+      '<ellipse cx="27" cy="58" rx="6" ry="4" fill="#ffab91" stroke="none" opacity=".8"/><ellipse cx="73" cy="58" rx="6" ry="4" fill="#ffab91" stroke="none" opacity=".8"/>' +
+      face +
+      '<rect x="30" y="84" width="40" height="9" rx="3" fill="#b0bec5"/>' +
+      '<rect x="32" y="93" width="36" height="9" rx="3" fill="#90a4ae"/>' +
+      '<path d="M40 102 H60 L55 110 H45 Z" fill="#546e7a"/>' +
+      '</svg>';
+  }
+
+  function setMascot(el, mood, lit) { el.innerHTML = mascotSVG(mood, lit); }
+  document.querySelectorAll("[data-mascot]").forEach(function (el) {
+    setMascot(el, el.getAttribute("data-mascot"), el.getAttribute("data-lit") === "1");
+  });
+  var guideMascot = $("guideMascot");
+
+  // วงจรบนหัวช่อง: ถ่าน - สายไฟ - หลอดไฟ
+  var CIRCUIT =
+    '<svg class="circuit" viewBox="0 -14 150 74" xmlns="http://www.w3.org/2000/svg" stroke="#263238" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">' +
+      '<g class="rays" stroke="#fff59d" stroke-width="4" style="transform-origin:118px 22px">' +
+        '<path d="M118 -10 V-2 M94 0 L100 6 M142 0 L136 6 M90 22 H97 M146 22 H139"/></g>' +
+      '<path class="wire" d="M55 28 H96 V40 H110" fill="none" stroke-width="4"/>' +
+      '<path class="wire" d="M10 28 H4 V54 H118 V46" fill="none" stroke-width="4"/>' +
+      '<rect x="10" y="17" width="40" height="22" rx="4" fill="#43a047"/>' +
+      '<rect x="10" y="17" width="13" height="22" rx="4" fill="#263238"/>' +
+      '<rect x="50" y="22" width="6" height="12" rx="1.5" fill="#bdbdbd"/>' +
+      '<path d="M34 23 V33 M29 28 H39" stroke="#fff" stroke-width="3"/>' +
+      '<circle class="glass" cx="118" cy="22" r="15"/>' +
+      '<path d="M112 27 l3 -7 l3 7 l3 -7 l3 7" fill="none" stroke="#795548" stroke-width="2.5"/>' +
+      '<rect x="110" y="36" width="16" height="10" rx="2" fill="#9e9e9e"/>' +
+    '</svg>';
+  bins.forEach(function (b) { b.querySelector(".bin-head").insertAdjacentHTML("beforeend", CIRCUIT); });
+
+  // ---------- เสียง (สร้างด้วย Web Audio ไม่ต้องใช้ไฟล์) ----------
+  var audioCtx = null;
+  var muted = false;
+  try { muted = localStorage.getItem("conductor-muted") === "1"; } catch (e) {}
+  function updateMuteBtn() { muteBtn.textContent = muted ? "🔇" : "🔊"; muteBtn.classList.toggle("off", muted); }
+  updateMuteBtn();
+  muteBtn.addEventListener("click", function () {
+    muted = !muted;
+    try { localStorage.setItem("conductor-muted", muted ? "1" : "0"); } catch (e) {}
+    updateMuteBtn();
+  });
+  function ensureAudio() {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    if (audioCtx && audioCtx.state !== "running") audioCtx.resume();
+  }
+  // ให้เสียงดังได้แม้เปิดโหมดเงียบบน iPad (Safari 17 ขึ้นไป)
+  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
+  // เสียงโทนเดียว (เลื่อนความถี่ได้ด้วย toFreq)
+  function tone(freq, start, dur, type, vol, toFreq) {
+    if (muted || !audioCtx) return;
+    var t0 = audioCtx.currentTime + start;
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, t0);
+    if (toFreq) osc.frequency.exponentialRampToValueAtTime(toFreq, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol || 0.25, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.05);
+  }
+  // เสียงซ่า (ไฟช็อต / พลุ)
+  function noise(start, dur, vol, freq) {
+    if (muted || !audioCtx) return;
+    var t0 = audioCtx.currentTime + start;
+    var len = Math.floor(audioCtx.sampleRate * dur);
+    var buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    var src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    var f = audioCtx.createBiquadFilter();
+    f.type = "bandpass"; f.frequency.value = freq || 3000; f.Q.value = 0.8;
+    var g = audioCtx.createGain();
+    g.gain.value = vol || 0.2;
+    src.connect(f); f.connect(g); g.connect(audioCtx.destination);
+    src.start(t0);
+  }
+  var sound = {
+    start: function () { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, i * 0.07, 0.18, "square", 0.08); }); },
+    pick: function () { tone(500, 0, 0.09, "triangle", 0.2, 900); },
+    drop: function () { tone(300, 0, 0.16, "sine", 0.35, 700); tone(900, 0.07, 0.1, "triangle", 0.15); },
+    back: function () { tone(500, 0, 0.12, "triangle", 0.15, 300); },
+    ready: function () { tone(784, 0, 0.12, "triangle", 0.2); tone(1047, 0.1, 0.2, "triangle", 0.2); },
+    ding: function (n) { var f = 880 * Math.pow(2, Math.min(n, 12) / 24); tone(f, 0, 0.25, "sine", 0.3); tone(f * 2, 0, 0.15, "sine", 0.08); },
+    buzz: function () { tone(160, 0, 0.22, "square", 0.1, 110); },
+    zap: function () { noise(0, 0.35, 0.25, 2500); tone(200, 0, 0.4, "sawtooth", 0.06, 1200); tone(1318, 0.3, 0.4, "sine", 0.2); },
+    fizzle: function () { tone(200, 0, 0.3, "sawtooth", 0.05, 900); noise(0.05, 0.12, 0.2, 2500); noise(0.25, 0.1, 0.15, 2500); tone(600, 0.45, 0.45, "triangle", 0.2, 150); },
+    fanfare: function (stars) {
+      var notes = stars >= 3 ? [523, 659, 784, 1047, 784, 1047] : stars === 2 ? [523, 659, 784, 1047] : [392, 440, 523];
+      notes.forEach(function (f, i) { tone(f, i * 0.12, 0.3, "square", 0.07); tone(f, i * 0.12, 0.3, "triangle", 0.2); });
+      if (stars >= 2) for (var i = 0; i < 6; i++) noise(0.4 + i * 0.12, 0.15, 0.12, 4000);
+    }
+  };
+  // ---------- เพลงประกอบ (แต่งขึ้นในเกม แนวมาริมบา เล่นวนเบาๆ) ----------
+  var musicBtn = $("music");
+  var MUSIC_VOL = 0.16, MUSIC_DUCK = 0.04;
+  var EIGHTH = 60 / 104 / 2; // 104 จังหวะต่อนาที
+  var music = { on: true, gain: null, timer: null, step: 0, next: 0, duck: false };
+  try { music.on = localStorage.getItem("conductor-music") !== "0"; } catch (e) {}
+  function updateMusicBtn() { musicBtn.classList.toggle("off", !music.on); }
+  updateMusicBtn();
+
+  var CHORDS = [ // [เบส, อาร์เปจโจ 8 ตัว] : C Am F G
+    [48, [60, 64, 67, 72, 67, 64, 60, 64]],
+    [45, [57, 60, 64, 69, 64, 60, 57, 60]],
+    [41, [53, 57, 60, 65, 60, 57, 53, 57]],
+    [43, [55, 59, 62, 67, 62, 59, 55, 59]]
+  ];
+  var _ = 0;
+  var MELODY = [
+    76, _, 79, _, 76, 74, 72, _,   72, _, 69, _, 72, _, 74, _,
+    69, _, 72, _, 77, 76, 74, _,   74, _, _, _, 71, _, 74, _,
+    76, _, 79, _, 81, _, 79, 76,   76, _, 72, _, 69, _, 72, _,
+    72, _, 74, _, 76, _, 74, 72,   74, _, _, _, 67, _, _, _
+  ];
+  function mfreq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+  function marimba(m, t, vol, decay) {
+    var f = mfreq(m);
+    [[1, 1], [4, 0.12]].forEach(function (h) {
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = "sine"; o.frequency.value = f * h[0];
+      var d = h[0] === 1 ? decay : decay * 0.25;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol * h[1], t + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(music.gain);
+      o.start(t); o.stop(t + d + 0.05);
+    });
+  }
+  function playStep(i, t) {
+    var slot = i % 8, chord = CHORDS[Math.floor(i / 8) % 4];
+    marimba(chord[1][slot], t, 0.18, 0.5);
+    if (slot === 0 || slot === 4) marimba(chord[0], t, 0.45, 0.9);
+    if (MELODY[i]) marimba(MELODY[i], t, 0.42, 0.8);
+  }
+  function musicTick() {
+    var now = audioCtx.currentTime;
+    if (music.next < now) music.next = now + 0.05; // กันเล่นรัวหลังแท็บถูกพัก
+    while (music.next < now + 0.2) {
+      playStep(music.step, music.next);
+      music.next += EIGHTH;
+      music.step = (music.step + 1) % MELODY.length;
+    }
+  }
+  function musicLevel() { return music.duck ? MUSIC_DUCK : MUSIC_VOL; }
+  function startMusic() {
+    if (!music.on || !audioCtx || music.timer) return;
+    if (!music.gain) { music.gain = audioCtx.createGain(); music.gain.gain.value = 0; music.gain.connect(audioCtx.destination); }
+    music.gain.gain.cancelScheduledValues(audioCtx.currentTime);
+    music.gain.gain.setTargetAtTime(musicLevel(), audioCtx.currentTime, 0.4);
+    music.next = audioCtx.currentTime + 0.1;
+    music.timer = setInterval(musicTick, 50);
+    musicTick();
+  }
+  function stopMusic() {
+    if (!music.timer) return;
+    clearInterval(music.timer); music.timer = null;
+    music.gain.gain.cancelScheduledValues(audioCtx.currentTime);
+    music.gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.08);
+  }
+  // ลดเสียงเพลงลงชั่วคราว (ตอนเฉลยและตอนพลุ)
+  function duckMusic(on) {
+    music.duck = on;
+    if (music.gain && music.timer) music.gain.gain.setTargetAtTime(musicLevel(), audioCtx.currentTime, 0.25);
+  }
+  musicBtn.addEventListener("click", function () {
+    music.on = !music.on;
+    try { localStorage.setItem("conductor-music", music.on ? "1" : "0"); } catch (e) {}
+    updateMusicBtn();
+    if (music.on) { ensureAudio(); startMusic(); } else stopMusic();
+  });
+
+  // iPad ยอมเปิดเสียงเฉพาะตอนแตะ จึงลองปลดล็อกทั้งตอนเริ่มแตะและตอนปล่อยนิ้ว
+  ["pointerdown", "touchend", "click"].forEach(function (t) {
+    document.addEventListener(t, function () { ensureAudio(); startMusic(); }, true);
+  });
+  // กลับเข้าแอปหลังสลับไปแอปอื่น
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && audioCtx) audioCtx.resume();
+  });
+
+  // ---------- ข้อความของน้องหลอดไฟ ----------
+  function say(text, mood) {
+    if (hint.textContent !== text) {
+      hint.textContent = text;
+      hint.classList.remove("pop"); void hint.offsetWidth; hint.classList.add("pop");
+    }
+    if (mood) setMascot(guideMascot, mood);
+  }
+
+  // ---------- การ์ด ----------
+  function makeCard(item) {
+    var card = document.createElement("div");
+    card.className = "card";
+    card._item = item;
+
+    var pic = document.createElement("div");
+    pic.className = "pic";
+    var icon = ICON_SET[item.name];
+    if (icon) pic.innerHTML = SVG_OPEN + icon + "</svg>";
+    else card.classList.add("no-img");
+
+    if (item.image) {
+      // ถ้ามีรูปถ่ายในโฟลเดอร์ images ให้ใช้รูปถ่ายแทนไอคอน
+      var img = document.createElement("img");
+      img.alt = item.name;
+      img.draggable = false;
+      img.onload = function () { card.classList.remove("no-img"); card.classList.add("photo"); };
+      img.onerror = function () { img.remove(); };
+      img.src = "images/" + item.image;
+      pic.appendChild(img);
+    }
+
+    var name = document.createElement("div");
+    name.className = "name";
+    name.textContent = item.name;
+
+    var mark = document.createElement("div");
+    mark.className = "mark";
+
+    var reason = document.createElement("div");
+    reason.className = "reason";
+    reason.textContent = item.reason;
+
+    card.appendChild(pic);
+    card.appendChild(name);
+    card.appendChild(reason);
+    card.appendChild(mark);
+    card.addEventListener("pointerdown", startDrag);
+    card.addEventListener("animationend", function (e) {
+      if (e.animationName === "deal") card.classList.remove("deal");
+    });
+    return card;
+  }
+
+  function trayCards() { return tray.querySelectorAll(".card"); }
+  function allCards() { return Array.prototype.slice.call(document.querySelectorAll(".tray .card, .bin .card")); }
+
+  function updateTrayState() {
+    var empty = trayCards().length === 0;
+    var wasEmpty = tray.classList.contains("empty");
+    tray.classList.toggle("empty", empty && !revealed);
+    if (!revealed) {
+      if (empty) say("วางครบแล้ว! จะย้ายก็ได้ หรือกด \"ตรวจคำตอบ\" เลย", "happy");
+      else say("ลากวัตถุแต่ละชิ้นไปใส่ช่องที่ถูกต้องนะ!", "idle");
+      if (empty && !wasEmpty) sound.ready();
+    }
+  }
+
+  // FLIP: ให้การ์ดเลื่อนจากตำแหน่งเดิม (from) ไปตำแหน่งใหม่อย่างนุ่มนวล
+  function flip(el, from, ms) {
+    var to = el.getBoundingClientRect();
+    var dx = from.left - to.left, dy = from.top - to.top;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    el.style.transition = "none";
+    el.style.transform = "translate(" + dx + "px," + dy + "px)";
+    el.getBoundingClientRect();
+    el.style.transition = "transform " + ms + "ms cubic-bezier(.3,1.3,.5,1)";
+    el.style.transform = "";
+    var done = function () { el.style.transition = ""; el.removeEventListener("transitionend", done); };
+    el.addEventListener("transitionend", done);
+  }
+
+  function sparks(x, y, n) {
+    for (var i = 0; i < n; i++) {
+      var s = document.createElement("div");
+      s.className = "spark";
+      var a = (Math.PI * 2 * i) / n + Math.random() * 0.5;
+      var d = 50 + Math.random() * 40;
+      s.style.left = x + "px";
+      s.style.top = y + "px";
+      s.style.setProperty("--dx", Math.cos(a) * d + "px");
+      s.style.setProperty("--dy", Math.sin(a) * d + "px");
+      document.body.appendChild(s);
+      s.addEventListener("animationend", function () { this.remove(); });
+    }
+  }
+
+  function bump(el) { el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
+
+  // ---------- การลาก (ใช้ได้ทั้งเมาส์และนิ้ว) ----------
+  var drag = null;
+
+  function startDrag(e) {
+    if (revealed || drag) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    e.preventDefault();
+    var card = e.currentTarget;
+    card.classList.remove("deal");
+    card.style.transition = card.style.transform = "";
+    var r = card.getBoundingClientRect();
+
+    var ph = document.createElement("div");
+    ph.className = "placeholder";
+    ph.style.width = r.width + "px";
+    ph.style.height = r.height + "px";
+    card.parentNode.insertBefore(ph, card);
+
+    document.body.appendChild(card);
+    card.classList.add("dragging");
+    card.style.width = r.width + "px";
+    card.style.left = r.left + "px";
+    card.style.top = r.top + "px";
+
+    drag = { card: card, ph: ph, id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top, over: null };
+    sound.pick();
+    window.addEventListener("pointermove", moveDrag);
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+  }
+
+  function dropTargetAt(x, y) {
+    var el = document.elementFromPoint(x, y);
+    if (!el) return null;
+    return el.closest(".bin") || el.closest(".tray");
+  }
+
+  function setOver(target) {
+    if (drag.over === target) return;
+    if (drag.over) drag.over.classList.remove("over");
+    drag.over = target;
+    if (target) target.classList.add("over");
+  }
+
+  function moveDrag(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    drag.card.style.left = (e.clientX - drag.dx) + "px";
+    drag.card.style.top = (e.clientY - drag.dy) + "px";
+    setOver(dropTargetAt(e.clientX, e.clientY));
+  }
+
+  function endDrag(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    window.removeEventListener("pointermove", moveDrag);
+    window.removeEventListener("pointerup", endDrag);
+    window.removeEventListener("pointercancel", endDrag);
+
+    var card = drag.card, ph = drag.ph;
+    var target = e.type === "pointerup" ? dropTargetAt(e.clientX, e.clientY) : null;
+    setOver(null);
+
+    var from = card.getBoundingClientRect();
+    card.classList.remove("dragging");
+    card.style.width = card.style.left = card.style.top = "";
+
+    if (target && target.classList.contains("bin")) {
+      target.querySelector(".bin-items").appendChild(card);
+      ph.remove();
+      sound.drop();
+      bump(target);
+      sparks(e.clientX, e.clientY, 9);
+    } else if (target && target === tray) {
+      tray.insertBefore(card, checkBtn);
+      ph.remove();
+      sound.drop();
+    } else {
+      ph.replaceWith(card); // ปล่อยนอกช่อง: กลับที่เดิม
+      sound.back();
+    }
+    flip(card, from, 320);
+    drag = null;
+    updateTrayState();
+  }
+
+  // ---------- การเฉลย ----------
+  function starsFor(score, total) {
+    var r = score / total;
+    if (r >= 11 / 12) return 3;
+    if (r >= 8 / 12) return 2;
+    return 1;
+  }
+
+  var finishTimer = null, unduckTimer = null;
+  var seq = null; // ลำดับขั้นตอนการเฉลย (แตะจอเพื่อข้ามได้)
+
+  function reveal() {
+    if (revealed) return;
+    revealed = true;
+    document.body.classList.add("revealed");
+    tray.classList.remove("empty");
+
+    var cards = allCards();
+    var wrong = [];
+    var right = 0;
+    var total = cards.length;
+
+    function mark(card, quiet) {
+      var bin = card.closest(".bin");
+      var ok = bin && bin.dataset.answer === card._item.answer;
+      card.classList.add(ok ? "correct" : "wrong");
+      card.querySelector(".mark").textContent = ok ? "✓" : "✗";
+      if (ok) right++; else { wrong.push(card); card.classList.add("show-reason"); }
+      if (!quiet) {
+        if (ok) sound.ding(right); else sound.buzz();
+        say("ถูกแล้ว " + right + " ชิ้น...", "nervous");
+      }
+    }
+
+    var steps = cards.map(function (card) {
+      return { delay: 320, fn: function (quiet) { mark(card, quiet); } };
+    });
+    // หลอดไฟของช่องนำไฟฟ้าทำงานแบบวงจรจริง: สว่างเมื่อมีแต่ของที่นำไฟฟ้า
+    steps.push({ delay: 500, fn: function (quiet) {
+      var yesBin = bins.filter(function (b) { return b.dataset.answer === "นำไฟฟ้า"; })[0];
+      var inside = Array.prototype.slice.call(yesBin.querySelectorAll(".card"));
+      var mixed = inside.some(function (c) { return c._item.answer !== "นำไฟฟ้า"; });
+      if (inside.length && !mixed) {
+        yesBin.classList.add("lit");
+        if (!quiet) {
+          sound.zap();
+          var r = yesBin.querySelector(".circuit").getBoundingClientRect();
+          sparks(r.right - r.width * 0.21, r.top + r.height * 0.45, 12);
+        }
+        say("ไฟติดแล้ว! ของในช่องนี้นำไฟฟ้าทุกชิ้น", "happy");
+      } else {
+        yesBin.classList.add("flicker");
+        if (!quiet) sound.fizzle();
+        say(inside.length ? "ไฟไม่ติด! มีของที่ไม่นำไฟฟ้าปนอยู่" : "ไฟไม่ติด! ไม่มีของที่นำไฟฟ้าในช่องนี้เลย", "sad");
+      }
+    }});
+    steps.push({ delay: 200, fn: function () {
+      var wait = seq && !seq.skipped ? 1400 : 0;
+      finishTimer = setTimeout(function () { finish(right, total); }, wait);
+    }});
+
+    seq = { steps: steps, i: 0, timer: null, skipped: false };
+    duckMusic(true);
+    say("ลุ้นกันเลย... (แตะจอเพื่อข้ามได้)", "nervous");
+    runSeq();
+  }
+
+  function runSeq() {
+    if (!seq || seq.i >= seq.steps.length) { seq = null; return; }
+    var s = seq.steps[seq.i++];
+    seq.timer = setTimeout(function () { s.fn(false); runSeq(); }, s.delay);
+  }
+
+  function skipReveal() {
+    if (!seq) return;
+    clearTimeout(seq.timer);
+    seq.skipped = true;
+    var s = seq;
+    s.i--; // ขั้นที่ตั้งเวลารอไว้ยังไม่ได้ทำ ต้องทำด้วย
+    while (s.i < s.steps.length) s.steps[s.i++].fn(true);
+    seq = null;
+  }
+
+  document.addEventListener("pointerdown", function (e) {
+    if (seq && !e.target.closest("#controls")) skipReveal();
+  }, true);
+
+  function finish(score, total) {
+    var stars = starsFor(score, total);
+    var starsHTML = [0, 1, 2].map(function (i) { return starSVG(i < stars); }).join("");
+    var text = "ถูก " + score + " จาก " + total + " ชิ้น";
+    $("popStars").innerHTML = starsHTML;
+    $("barStars").innerHTML = starsHTML;
+    $("popScore").textContent = text;
+    $("barScore").textContent = text;
+    $("ribbon").textContent = stars === 3 ? "เยี่ยมมาก!" : stars === 2 ? "เก่งมาก!" : "สู้ๆ นะ!";
+    $("ribbon").style.background = stars === 3 ? "#ffa000" : stars === 2 ? "#29a8f0" : "#7e57c2";
+    var good = stars >= 2;
+    setMascot($("popMascot"), good ? "happy" : "sad");
+    setMascot(guideMascot, good ? "happy" : "sad");
+    say(score === total ? "ถูกทุกชิ้นเลย เก่งที่สุด!" :
+        "ชิ้นที่มี ✗ วางผิดช่อง อ่านเหตุผลใต้การ์ดกันนะ");
+    popup.classList.remove("hide");
+    sound.fanfare(stars);
+    confetti(stars === 3 ? 180 : stars === 2 ? 110 : 40);
+    unduckTimer = setTimeout(function () { duckMusic(false); }, 3500);
+  }
+
+  function showAnswers() {
+    popup.classList.add("hide");
+    tray.classList.add("done");
+  }
+
+  // ---------- พลุกระดาษ ----------
+  var cv = $("confetti"), cx = cv.getContext("2d"), parts = [], raf = null;
+  var COLORS = ["#ffd54f", "#ff7043", "#66bb6a", "#29b6f6", "#ab47bc", "#ffffff", "#ec407a"];
+  function confetti(n) {
+    cv.width = innerWidth; cv.height = innerHeight;
+    for (var i = 0; i < n; i++) {
+      var left = i % 2 === 0;
+      parts.push({
+        x: left ? -10 : cv.width + 10,
+        y: cv.height * (0.55 + Math.random() * 0.3),
+        vx: (left ? 1 : -1) * (6 + Math.random() * 10),
+        vy: -(12 + Math.random() * 12),
+        w: 8 + Math.random() * 8, h: 5 + Math.random() * 6,
+        r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4,
+        c: COLORS[i % COLORS.length], life: 0
+      });
+    }
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+  function tick() {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter(function (p) { return p.y < cv.height + 40 && p.life < 400; });
+    parts.forEach(function (p) {
+      p.life++; p.vy += 0.38; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r);
+      cx.scale(1, Math.cos(p.life * 0.15));
+      cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      cx.restore();
+    });
+    raf = parts.length ? requestAnimationFrame(tick) : null;
+    if (!raf) cx.clearRect(0, 0, cv.width, cv.height);
+  }
+
+  // ---------- เริ่มรอบใหม่ ----------
+  function newRound() {
+    if (seq) { clearTimeout(seq.timer); seq = null; }
+    clearTimeout(finishTimer);
+    clearTimeout(unduckTimer);
+    duckMusic(false);
+    revealed = false;
+    document.body.classList.remove("revealed");
+    tray.classList.remove("done");
+    popup.classList.add("hide");
+    bins.forEach(function (b) { b.classList.remove("lit", "flicker"); });
+    allCards().forEach(function (c) { c.remove(); });
+
+    var picked = shuffle(ALL).slice(0, ROUND_SIZE);
+    picked.forEach(function (item, i) {
+      var card = makeCard(item);
+      card.classList.add("deal");
+      card.style.animationDelay = (i * 0.05) + "s";
+      tray.insertBefore(card, checkBtn);
+    });
+
+    updateTrayState();
+    if (picked.length === 0) {
+      tray.classList.remove("empty");
+      say("ไม่พบรายการวัตถุ กรุณาตรวจไฟล์ items.js", "sad");
+    }
+  }
+
+  checkBtn.addEventListener("click", reveal);
+  $("againBar").addEventListener("click", newRound);
+  $("againPop").addEventListener("click", newRound);
+  $("view").addEventListener("click", showAnswers);
+
+  // หน้าเริ่มเกม
+  var controls = $("controls");
+  controls.classList.add("floating");
+  $("start").addEventListener("click", function () {
+    ensureAudio();
+    sound.start();
+    $("title").classList.add("hide");
+    controls.classList.remove("floating");
+    newRound();
+  });
+  // เก็บเกมไว้ในเครื่อง ให้เล่นได้แม้ไม่มีเน็ต (ทำงานเมื่อเปิดผ่านเว็บเท่านั้น)
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>
