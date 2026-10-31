@@ -86,6 +86,10 @@
 
   #controls { display: flex; gap: 0.6rem; flex: none; z-index: 50; }
   #controls.floating { position: fixed; right: 1rem; top: 0.8rem; z-index: 3000; }
+  #controls.floating #home { display: none; }
+  #confirm .panel { padding: 2rem 2rem 1.6rem; width: min(92vw, 560px); }
+  #confirm .ask { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 600; line-height: 1.35; }
+  #confirm .row { margin-top: 1.2rem; }
   #controls .btn {
     font-size: 1.8rem;
     width: 3.6rem; height: 3.6rem;
@@ -423,7 +427,7 @@
     <div data-mascot="idle" data-lit="1"></div>
     <div class="tagline">มาช่วย <b>น้องหลอดไฟ</b> แยกวัตถุ ว่าชิ้นไหนนำไฟฟ้ากันเถอะ!</div>
     <button class="btn green huge" id="start">▶ เริ่มเล่น</button>
-    <div class="version">เวอร์ชัน 5</div>
+    <div class="version">เวอร์ชัน 6</div>
   </div>
 
   <header>
@@ -433,6 +437,7 @@
       <div class="bubble" id="hint">ลากวัตถุแต่ละชิ้นไปใส่ช่องที่ถูกต้องนะ!</div>
     </div>
     <div id="controls">
+      <button class="btn" id="home" title="กลับหน้าเริ่มเกม">🏠</button>
       <button class="btn" id="music" title="เปิด/ปิดเพลง">🎵</button>
       <button class="btn" id="mute" title="เปิด/ปิดเสียงเอฟเฟกต์">🔊</button>
     </div>
@@ -459,6 +464,17 @@
   </div>
 
   <!-- ป๊อปอัปผลของรอบ -->
+  <!-- กล่องถามก่อนกลับหน้าเริ่มเกมระหว่างเล่น -->
+  <div class="overlay hide" id="confirm">
+    <div class="panel">
+      <div class="ask">กลับหน้าเริ่มเกม?<br>ที่วางไว้จะหายนะ</div>
+      <div class="row">
+        <button class="btn blue big" id="homeYes">🏠 กลับ</button>
+        <button class="btn green big" id="homeNo">▶ เล่นต่อ</button>
+      </div>
+    </div>
+  </div>
+
   <div class="overlay hide" id="popup">
     <div class="panel">
       <div class="ribbon outlined" id="ribbon">เยี่ยมมาก!</div>
@@ -1140,6 +1156,26 @@
     controls.classList.remove("floating");
     newRound();
   });
+
+  // ปุ่ม 🏠 กลับหน้าเริ่มเกม (รอบที่ยังไม่เฉลยจะถูกยกเลิก)
+  var confirmBox = $("confirm");
+  function goHome() {
+    if (seq) { clearTimeout(seq.timer); seq = null; }
+    clearTimeout(finishTimer);
+    clearTimeout(unduckTimer);
+    duckMusic(false);
+    confirmBox.classList.add("hide");
+    popup.classList.add("hide");
+    $("title").classList.remove("hide");
+    controls.classList.add("floating");
+  }
+  $("home").addEventListener("click", function () {
+    var placed = document.querySelectorAll(".bin .card").length > 0;
+    if (!revealed && placed) confirmBox.classList.remove("hide");
+    else goHome();
+  });
+  $("homeYes").addEventListener("click", goHome);
+  $("homeNo").addEventListener("click", function () { confirmBox.classList.add("hide"); });
   // เก็บเกมไว้ในเครื่อง ให้เล่นได้แม้ไม่มีเน็ต (ทำงานเมื่อเปิดผ่านเว็บเท่านั้น)
   if ("serviceWorker" in navigator && location.protocol === "https:") {
     navigator.serviceWorker.register("sw.js").catch(function () {});
