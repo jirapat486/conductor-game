@@ -9,7 +9,7 @@ var ICONS = {
       '<rect x="32" y="11" width="36" height="11" rx="4" fill="#b0bec5"/>' +
     '</g>',
 
-  "ช้อนโลหะ":
+  "ช้อนสแตนเลส":
     '<g transform="rotate(-35 50 50)">' +
       '<path d="M46 46 L44 88 Q50 94 56 88 L54 46 Z" fill="#b0bec5"/>' +
       '<ellipse cx="50" cy="28" rx="16" ry="21" fill="#cfd8dc"/>' +
@@ -23,20 +23,6 @@ var ICONS = {
       '<circle cx="28" cy="50" r="6.5" fill="#fff"/>' +
       '<path d="M18 40 Q22 35 28 35" stroke="#fff" stroke-width="3" fill="none"/>' +
     '</g>',
-
-  "เหรียญ":
-    '<circle cx="50" cy="52" r="35" fill="#f9a825"/>' +
-    '<circle cx="50" cy="48" r="35" fill="#ffd54f"/>' +
-    '<circle cx="50" cy="48" r="24" fill="#ffca28" stroke-width="3"/>' +
-    '<text x="50" y="61" font-size="36" text-anchor="middle" font-weight="bold" fill="#e65100" stroke="none" font-family="Mitr, sans-serif">1</text>' +
-    '<path d="M28 34 Q34 22 46 18" stroke="#fff" stroke-width="4" fill="none"/>',
-
-  "เหรียญ 1 บาท":
-    '<circle cx="50" cy="52" r="35" fill="#90a4ae"/>' +
-    '<circle cx="50" cy="48" r="35" fill="#e0e6ea"/>' +
-    '<circle cx="50" cy="48" r="24" fill="#cfd8dc" stroke-width="3"/>' +
-    '<text x="50" y="61" font-size="36" text-anchor="middle" font-weight="bold" fill="#546e7a" stroke="none" font-family="Mitr, sans-serif">1</text>' +
-    '<path d="M28 34 Q34 22 46 18" stroke="#fff" stroke-width="4" fill="none"/>',
 
   "ลวดทองแดง":
     '<path d="M10 70 Q20 70 24 62" fill="none" stroke-width="10"/>' +
